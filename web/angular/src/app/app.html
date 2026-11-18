@@ -1,0 +1,119 @@
+<main class="page">
+  <header class="topo">
+    <div>
+      <h1>Notificações &amp; Auditoria</h1>
+      <p class="sub">Strangler Fig: cadastro síncrono + efeitos colaterais assíncronos</p>
+    </div>
+
+    <div class="versoes" role="group" aria-label="Versão do Quarkus">
+      <button type="button" [class.ativo]="versao() === 'q2'" (click)="usarVersao('q2')">
+        Quarkus 2
+      </button>
+      <button type="button" [class.ativo]="versao() === 'q3'" (click)="usarVersao('q3')">
+        Quarkus 3
+      </button>
+      <button type="button" [class.ativo]="versao() === 'q4'" (click)="usarVersao('q4')">
+        Quarkus 4
+      </button>
+    </div>
+  </header>
+
+  <section class="endpoints">
+    <span><b>core</b> {{ baseUsuarios() }}</span>
+    <span><b>worker</b> {{ baseNotificacoes() }}</span>
+    <button type="button" class="link" (click)="recarregar()">⟳ Recarregar</button>
+  </section>
+
+  @if (aviso()) {
+    <div class="alerta ok">{{ aviso() }}</div>
+  }
+  @if (erro()) {
+    <div class="alerta erro">{{ erro() }}</div>
+  }
+
+  <section class="cards">
+    <article class="card">
+      <span class="rotulo">ENVIADO</span>
+      <strong class="verde">{{ resumo().ENVIADO }}</strong>
+    </article>
+    <article class="card">
+      <span class="rotulo">FALHA</span>
+      <strong class="vermelho">{{ resumo().FALHA }}</strong>
+    </article>
+    <article class="card">
+      <span class="rotulo">TOTAL</span>
+      <strong>{{ resumo().TOTAL }}</strong>
+    </article>
+    <article class="card">
+      <span class="rotulo">ÚLTIMO POST</span>
+      <strong>{{ latenciaMs() === null ? '—' : latenciaMs() + ' ms' }}</strong>
+    </article>
+  </section>
+
+  <section class="colunas">
+    <div class="painel">
+      <h2>Novo usuário</h2>
+      <form (ngSubmit)="criar()">
+        <label>
+          Nome
+          <input
+            type="text"
+            name="nome"
+            placeholder="Ana"
+            [ngModel]="nome()"
+            (ngModelChange)="nome.set($event)"
+          />
+        </label>
+        <label>
+          E-mail
+          <input
+            type="email"
+            name="email"
+            placeholder="ana@email.com"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+        <button type="submit" [disabled]="carregando()">Cadastrar</button>
+        <small>Dica: use <code>falha</code> no e-mail para simular rejeição do SMTP.</small>
+      </form>
+
+      <h2>Usuários ({{ usuarios().length }})</h2>
+      <ul class="lista">
+        @for (u of usuarios(); track u.id) {
+          <li>
+            <span class="avatar">{{ u.nome.charAt(0) }}</span>
+            <span class="dados">
+              <b>{{ u.nome }}</b>
+              <small>{{ u.email }}</small>
+            </span>
+            <span class="id">#{{ u.id }}</span>
+          </li>
+        } @empty {
+          <li class="vazio">Nenhum usuário ainda.</li>
+        }
+      </ul>
+    </div>
+
+    <div class="painel">
+      <h2>Histórico de envios</h2>
+      <div class="tabela">
+        @for (h of historico(); track h.id) {
+          <article class="linha">
+            <span class="status" [class.falha]="h.status === 'FALHA'">{{ h.status }}</span>
+            <div class="detalhes">
+              <b>{{ h.email }}</b>
+              <small>
+                {{ h.templateCodigo }} • usuário #{{ h.usuarioId }} •
+                Quarkus {{ h.versaoQuarkus }} • {{ h.duracaoMs }} ms
+              </small>
+              <small>{{ h.detalhe }}</small>
+            </div>
+          </article>
+        } @empty {
+          <p class="vazio">Aguardando o worker processar a fila…</p>
+        }
+      </div>
+    </div>
+  </section>
+</main>
